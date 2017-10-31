@@ -4,6 +4,7 @@ package chatty.gui.components;
 import chatty.Helper;
 import chatty.gui.LinkListener;
 import chatty.gui.components.menus.ContextMenuListener;
+import chatty.gui.components.textpane.ChannelTextPane.Styles;
 import chatty.gui.components.textpane.LinkController;
 import chatty.gui.components.textpane.WrapLabelView;
 import java.net.URI;
@@ -15,6 +16,8 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.swing.ImageIcon;
 import javax.swing.JTextPane;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
@@ -173,7 +176,12 @@ public class ExtendedTextPane extends JTextPane {
                     if (!foundUrl.startsWith("http")) {
                         foundUrl = "http://"+foundUrl;
                     }
-                    rangesStyle.put(start, url(foundUrl));
+                    
+                    if(foundUrl.endsWith(".gif") || foundUrl.endsWith(".png") || foundUrl.endsWith(".jpg")){
+                        rangesStyle.put(start, image(foundUrl));
+                    } else {
+                        rangesStyle.put(start, url(foundUrl));
+                    }
                 }
             }
         }
@@ -262,6 +270,19 @@ public class ExtendedTextPane extends JTextPane {
         StyleConstants.setUnderline(urlStyle, true);
         urlStyle.addAttribute(HTML.Attribute.HREF, url);
         return urlStyle;
+    }
+    
+    public MutableAttributeSet image(String imageUrl) {
+    	SimpleAttributeSet imageStyle = new SimpleAttributeSet();
+    	
+    	//Add link for URL
+    	StyleConstants.setUnderline(imageStyle, true);
+    	imageStyle.addAttribute(HTML.Attribute.HREF, imageUrl);
+    	
+    	//Add Image from Url
+    	StyleConstants.setIcon(imageStyle, new ImageIcon(imageUrl));
+    	
+    	return imageStyle;
     }
 
     /**
