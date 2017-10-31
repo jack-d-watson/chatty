@@ -1,28 +1,13 @@
 
 package chatty.gui.components.textpane;
 
-import chatty.gui.components.ChannelEditBox;
-import chatty.Helper;
-import chatty.SettingsManager;
-import chatty.gui.MouseClickedListener;
-import chatty.gui.UserListener;
-import chatty.gui.HtmlColors;
-import chatty.gui.LinkListener;
-import chatty.gui.StyleServer;
-import chatty.gui.UrlOpener;
-import chatty.gui.MainGui;
-import chatty.User;
-import chatty.util.api.usericons.Usericon;
-import chatty.gui.components.menus.ContextMenuListener;
-import chatty.util.DateTime;
-import chatty.util.StringUtil;
-import chatty.util.api.CheerEmoticon;
-import chatty.util.api.Emoticon;
-import chatty.util.api.Emoticon.EmoticonImage;
-import chatty.util.api.Emoticon.EmoticonUser;
-import chatty.util.api.Emoticons;
-import chatty.util.api.Emoticons.TagEmotes;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
@@ -39,16 +24,63 @@ import java.awt.image.BufferedImage;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.*;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import javax.swing.*;
-import static javax.swing.JComponent.WHEN_FOCUSED;
+
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.KeyStroke;
+import javax.swing.Popup;
+import javax.swing.PopupFactory;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
-import javax.swing.text.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTML;
+
+import chatty.Helper;
+import chatty.SettingsManager;
+import chatty.User;
+import chatty.gui.HtmlColors;
+import chatty.gui.LinkListener;
+import chatty.gui.MainGui;
+import chatty.gui.MouseClickedListener;
+import chatty.gui.StyleServer;
+import chatty.gui.UrlOpener;
+import chatty.gui.UserListener;
+import chatty.gui.components.ChannelEditBox;
+import chatty.gui.components.menus.ContextMenuListener;
+import chatty.util.DateTime;
+import chatty.util.StringUtil;
+import chatty.util.TwitchEmotes.Emoteset;
+import chatty.util.api.CheerEmoticon;
+import chatty.util.api.Emoticon;
+import chatty.util.api.Emoticon.EmoticonImage;
+import chatty.util.api.Emoticon.EmoticonUser;
+import chatty.util.api.Emoticons;
+import chatty.util.api.Emoticons.TagEmotes;
+import chatty.util.api.usericons.Usericon;
 
 
 /**
@@ -1867,7 +1899,14 @@ public class ChannelTextPane extends JTextPane implements LinkListener, Emoticon
                         Emoticon.Builder b = new Emoticon.Builder(
                                 Emoticon.Type.TWITCH, code, url);
                         b.setNumericId(id);
-                        b.setEmoteset(Emoticon.SET_UNKNOWN);
+						Emoteset emotesetInfo = main.emoticons.getInfoByEmoteId(id);
+						if (emotesetInfo != null) {
+							b.setEmoteset(emotesetInfo.emoteset_id);
+							b.setStream(emotesetInfo.stream);
+							b.setEmotesetInfo(emotesetInfo.product);
+						} else {
+							b.setEmoteset(Emoticon.SET_UNKNOWN);
+						}
                         emoticon = b.build();
                         main.emoticons.addTempEmoticon(emoticon);
                         LOGGER.info("Added emote from message: "+emoticon);
@@ -2908,9 +2947,7 @@ public class ChannelTextPane extends JTextPane implements LinkListener, Emoticon
             StyleConstants.setIcon(emoteStyle, emoteImage.getImageIcon());
             
             emoteStyle.addAttribute(Attribute.EMOTICON, emoteImage);
-            if (!emoticon.hasStreamSet()) {
-                emoticon.setStream(main.emoticons.getStreamFromEmoteset(emoticon.emoteSet));
-            }
+            Emoticons.addInfo(main.emoticons.getEmotesetInfo(), emoticon);
             return emoteStyle;
         }
         
